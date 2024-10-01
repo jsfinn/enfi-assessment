@@ -25,17 +25,49 @@ func TestMonitor(t *testing.T) {
 	log.Printf("watchList: %v", watchList)
 
 	monitor := NewMonitor(fp, watchList, historyCache)
+	monitor.Start()
 
-	monitor.ExecuteTask()
+	monitor.EvaluateWatchlist()
 	time.Sleep(10 * time.Millisecond)
 	log.Printf("-------------------")
 	time.Sleep(10 * time.Millisecond)
-	monitor.ExecuteTask()
+	monitor.EvaluateWatchlist()
 	log.Printf("-------------------")
 	time.Sleep(10 * time.Millisecond)
 	fp.UpdateLastModified("file2")
-	monitor.ExecuteTask()
+	monitor.EvaluateWatchlist()
 	log.Printf("-------------------")
 	time.Sleep(10 * time.Millisecond)
-	monitor.ExecuteTask()
+	fp.UpdateLastModified("file2")
+	monitor.EvaluateWatchlist()
+
+	monitor.ShutDown()
+}
+
+func TestMonitorWithScale(t *testing.T) {
+	// 1000 files, 50 directories
+	fileCount := 5000
+	directoryCount := 100
+	watchCount := 100
+
+	fp := mock.NewFileProvider(fileCount, directoryCount)
+
+	historyCache := NewHistoryCache()
+
+	// 500 files to watch
+	watchList := fp.CreateWatchList(watchCount)
+
+	monitor := NewMonitor(fp, watchList, historyCache)
+	monitor.Start()
+
+	// check the watchlist 100 times
+	for i := 0; i < 10; i++ {
+		// randomly update 100 files
+		ids := []model.FileId{}
+		for j := 0; j < 10; j++ {
+			_ = append(ids, fp.UpdateAny())
+		}
+		monitor.EvaluateWatchlist()
+		time.Sleep(1000 * time.Millisecond)
+	}
 }

@@ -72,6 +72,13 @@ func (fp *fileProvider) UpdateLastModified(fileId model.FileId) {
 	}
 }
 
+func (fp *fileProvider) UpdateAny() model.FileId {
+	fileIndex := randRange(0, len(fp.files))
+	file := fp.files[fileIndex]
+	file.LastModified = time.Now().UnixMilli()
+	return file.FileId
+}
+
 // AddFile adds a file to the file provider with the given ID and parent directory.
 func (fp *fileProvider) AddFile(id model.FileId, parentDirectory model.FileId) {
 	millis := time.Now().UnixMilli()
@@ -104,10 +111,13 @@ func (fp *fileProvider) CreateWatchList(count int) []model.FileId {
 		availableFiles = availableFiles[:len(availableFiles)-1]
 
 		watchList = append(watchList, fileId)
-		log.Println("Adding file ", fileId, " to watch list, remaining files ", availableFiles)
 	}
 	return watchList
 }
+
+////////////////////////////////////////
+// Mock implementation of the file provider interface
+////////////////////////////////////////
 
 // RetrieveMetadata returns the metadata for the file with the given ID. If the file does not exist, it returns an error.
 func (fp *fileProvider) RetrieveMetadata(fileId model.FileId) (model.Metadata, error) {
