@@ -3,5 +3,5 @@ directory_count: 1000
 watchfile_size: 100
 watch_iterations: 10
 watch_interval_ms: 1000
-mutations_per_iteration: 10
+mutations_per_iteration: 1000
 
