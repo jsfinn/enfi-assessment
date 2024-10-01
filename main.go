@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/jsfinn/enfi-assessment/mock"
+	"github.com/jsfinn/enfi-assessment/model"
 	"github.com/jsfinn/enfi-assessment/monitor"
+	"github.com/samber/lo"
 	"github.com/spf13/viper"
 )
 
@@ -58,4 +60,34 @@ func main() {
 		monitor.EvaluateWatchlist()
 		time.Sleep(time.Duration(config.WatchIntervalMs) * time.Millisecond)
 	}
+	monitor.ShutDown()
+
+	// dump the stats
+	log.Printf("Stats:")
+	watchlistMap := lo.Associate(watchlist, func(fileId model.FileId) (model.FileId, bool) { return fileId, true })
+	historyKeys := historyCache.GetAllCacheKeys()
+
+	for _, key := range historyKeys {
+		_, version := historyCache.Get(key)
+		var watchtype string
+		if _, ok := watchlistMap[model.FileId(key)]; ok {
+			watchtype = "explicit"
+		} else {
+			watchtype = "implicit"
+		}
+		var status = "not copied"
+		if version > 0 {
+			status = "copied"
+		}
+
+		log.Printf("File: %v   watchtype: %v  version: %v   status: %v", key, watchtype, version, status)
+		delete(watchlistMap, key)
+	}
+
+	for key := range watchlistMap {
+		if m, _ := fp.RetrieveMetadata(key); !m.IsDirectory {
+			log.Printf("File: %v   watchtype: explicit  version: 0   status: not copied", key)
+		}
+	}
+
 }
