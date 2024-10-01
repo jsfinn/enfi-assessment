@@ -1,0 +1,73 @@
+{
+    "filesystem": [
+        {
+            "fileId": "file1"
+        },
+        {
+            "fileId": "file2"
+        },
+        {
+            "fileId": "dir1",
+            "isDirectory": true,
+            "children": [
+                {
+                    "fileId": "file3"
+                },
+                {
+                    "fileId": "file4"
+                },
+                {
+                    "fileId": "dir2",
+                    "isDirectory": true,
+                    "children": [
+                        {
+                            "fileId": "file5"
+                        },
+                        {
+                            "fileId": "file6"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "fileId": "dir3",
+            "isDirectory": true,
+            "children": [
+                {
+                    "fileId": "file7"
+                },
+                {
+                    "fileId": "file8"
+                }
+            ]
+        }
+    ],
+    "watchlist": [
+        "file1",
+        "file2",
+        "dir1",
+        "file7"
+    ],
+    "updates": [
+        [
+            "file1",
+            "file2"
+        ],
+        [
+            "file3",
+            "file4"
+        ],
+        [
+            "file5",
+            "file6"
+        ],
+        [
+            "file8"
+        ],
+        [
+            "file5",
+            "file7"
+        ]
+    ]
+}

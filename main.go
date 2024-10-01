@@ -5,18 +5,13 @@ import (
 	"time"
 
 	"github.com/jsfinn/enfi-assessment/mock"
-	"github.com/jsfinn/enfi-assessment/model"
 	"github.com/jsfinn/enfi-assessment/monitor"
 	"github.com/spf13/viper"
 )
 
 type Config struct {
-	FileCount             int   `mapstructure:"file_count"`
-	DirectoryCount        int   `mapstructure:"directory_count"`
-	WatchfileSize         int   `mapstructure:"watchfile_size"`
-	WatchIterations       int   `mapstructure:"watch_iterations"`
-	WatchIntervalMs       int   `mapstructure:"watch_interval_ms"`
-	MutationsPerIteration int64 `mapstructure:"mutations_per_iteration"`
+	Datafile        string `mapstructure:"datafile"`
+	WatchIntervalMs int64  `mapstructure:"watch_interval_ms"`
 }
 
 func loadConfig() (*Config, error) {
@@ -42,22 +37,23 @@ func main() {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
-	fp := mock.NewFileProvider(config.FileCount, config.DirectoryCount)
+	fp, watchlist, steps, err := mock.NewFileProviderFromFile(config.Datafile)
+
+	if err != nil {
+		log.Fatalf("Error reading file: %v", err)
+	}
 
 	historyCache := monitor.NewHistoryCache()
 
 	// 500 files to watch
-	watchList := fp.CreateWatchList(config.WatchfileSize)
 
-	monitor := monitor.NewMonitor(fp, watchList, historyCache)
+	monitor := monitor.NewMonitor(fp, watchlist, historyCache)
 	monitor.Start()
 
 	// check the watchlist 100 times
-	for i := 0; i < config.WatchIterations; i++ {
-		// randomly update 100 files
-		ids := []model.FileId{}
-		for j := 0; j < int(config.MutationsPerIteration); j++ {
-			_ = append(ids, fp.UpdateAny())
+	for _, step := range steps {
+		for _, fileId := range step {
+			fp.UpdateLastModified(fileId)
 		}
 		monitor.EvaluateWatchlist()
 		time.Sleep(time.Duration(config.WatchIntervalMs) * time.Millisecond)

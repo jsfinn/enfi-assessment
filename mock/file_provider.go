@@ -12,12 +12,13 @@ import (
 )
 
 type fileProvider struct {
-	files        []*file
-	fileById     map[model.FileId]*file
+	files        []*mockFile
+	fileById     map[model.FileId]*mockFile
 	childrenById map[model.FileId][]model.FileId
 }
 
-type file struct {
+// mockFile is a struct that represents a file in the mock file provider.
+type mockFile struct {
 	FileId       model.FileId
 	LastModified int64
 	IsDirectory  bool
@@ -25,7 +26,7 @@ type file struct {
 }
 
 // Helper function to extract metadata from a mock file
-func MetadataFromFile(file file) model.Metadata {
+func MetadataFromFile(file mockFile) model.Metadata {
 	return model.Metadata{
 		Id:           file.FileId,
 		LastModified: file.LastModified,
@@ -38,7 +39,7 @@ func MetadataFromFile(file file) model.Metadata {
 // manually add the files and directories using AddFile and AddDirectory.
 func NewFileProvider(fileCount int, directoryCount int) *fileProvider {
 
-	fp := &fileProvider{fileById: make(map[model.FileId]*file), childrenById: make(map[model.FileId][]model.FileId)}
+	fp := &fileProvider{fileById: make(map[model.FileId]*mockFile), childrenById: make(map[model.FileId][]model.FileId)}
 
 	for i := 0; i < directoryCount; i++ {
 		fileId := model.FileId("directory" + strconv.Itoa(i+1))
@@ -96,7 +97,7 @@ func (fp *fileProvider) UpdateAny() model.FileId {
 // AddFile adds a file to the file provider with the given ID and parent directory.
 func (fp *fileProvider) AddFile(id model.FileId, parentDirectory model.FileId) {
 	millis := time.Now().UnixMilli()
-	file := &file{FileId: id, LastModified: millis, IsDirectory: false, ParentId: parentDirectory}
+	file := &mockFile{FileId: id, LastModified: millis, IsDirectory: false, ParentId: parentDirectory}
 	fp.files = append(fp.files, file)
 	fp.fileById[file.FileId] = file
 	fp.childrenById[file.ParentId] = append(fp.childrenById[file.ParentId], file.FileId)
@@ -105,7 +106,7 @@ func (fp *fileProvider) AddFile(id model.FileId, parentDirectory model.FileId) {
 // AddDirectory adds a directory to the file provider with the given ID and parent directory.
 func (fp *fileProvider) AddDirectory(id model.FileId, parentDirectory model.FileId) {
 	millis := time.Now().UnixMilli()
-	directory := &file{FileId: id, LastModified: millis, IsDirectory: true, ParentId: parentDirectory}
+	directory := &mockFile{FileId: id, LastModified: millis, IsDirectory: true, ParentId: parentDirectory}
 	fp.files = append(fp.files, directory)
 	fp.fileById[directory.FileId] = directory
 	fp.childrenById[id] = []model.FileId{}
