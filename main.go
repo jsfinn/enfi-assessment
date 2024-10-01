@@ -47,9 +47,11 @@ func main() {
 
 	historyCache := monitor.NewHistoryCache()
 
+	counter := monitor.NewSimpleCounter()
+
 	// 500 files to watch
 
-	monitor := monitor.NewMonitor(fp, watchlist, historyCache)
+	monitor := monitor.NewMonitor(fp, watchlist, historyCache, counter)
 	monitor.Start()
 
 	// check the watchlist 100 times
@@ -62,8 +64,8 @@ func main() {
 	}
 	monitor.ShutDown()
 
-	// dump the stats
-	log.Printf("Stats:")
+	// Dump watch Log
+	log.Printf("watch Log:")
 	watchlistMap := lo.Associate(watchlist, func(fileId model.FileId) (model.FileId, bool) { return fileId, true })
 	historyKeys := historyCache.GetAllCacheKeys()
 
@@ -89,5 +91,8 @@ func main() {
 			log.Printf("File: %v   watchtype: explicit  version: 0   status: not copied", key)
 		}
 	}
+
+	// Dump counter stats
+	counter.DumpStatsToLog()
 
 }

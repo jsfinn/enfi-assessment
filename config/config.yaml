@@ -1,2 +1,2 @@
 watch_interval_ms: 1000
-datafile: testdata.json
+datafile: testdatalarge.json

@@ -13,14 +13,16 @@ type Monitor struct {
 	cache             Cache
 	watchlist         map[model.FileId]bool
 	evaluationChannel chan model.Metadata
+	simpleCounter     *SimpleCounter
 }
 
 // Create a new monitor with the given API and watchlist
-func NewMonitor(api Api, fileIds []model.FileId, cache Cache) *Monitor {
+func NewMonitor(api Api, fileIds []model.FileId, cache Cache, simpleCounter *SimpleCounter) *Monitor {
 	return &Monitor{
-		api:       api,
-		watchlist: lo.Associate(fileIds, func(fileId model.FileId) (model.FileId, bool) { return fileId, true }),
-		cache:     cache,
+		api:           api,
+		watchlist:     lo.Associate(fileIds, func(fileId model.FileId) (model.FileId, bool) { return fileId, true }),
+		cache:         cache,
+		simpleCounter: simpleCounter,
 	}
 }
 
@@ -47,6 +49,7 @@ func (m *Monitor) evaluateMetadata(metadata model.Metadata) {
 	if lastModified, _ := m.cache.Get(metadata.Id); lastModified < metadata.LastModified {
 		version := m.cache.Update(metadata.Id, metadata.LastModified)
 		m.api.CopyFile(metadata.Id, metadata.LastModified, version)
+		m.simpleCounter.IncrementStat("copy_file_calls")
 	}
 }
 
@@ -54,6 +57,8 @@ func (m *Monitor) evaluateMetadata(metadata model.Metadata) {
 // and evaluate the metadata for each file.  If the file has been modified since the last evaluation, it will
 // copy the file.
 func (m *Monitor) EvaluateWatchlist() error {
+	m.simpleCounter.IncrementStat("evaluate_watchlist_calls")
+
 	if m.evaluationChannel == nil {
 		return errors.New("monitor not started")
 	}
@@ -74,7 +79,10 @@ func (m *Monitor) EvaluateWatchlist() error {
 
 		// Retrieve the metadata for the file associated with the fileId
 		metadata, err := m.api.RetrieveMetadata(fileId)
+		m.simpleCounter.IncrementStat("metadata_retrieved_calls")
+
 		if err != nil {
+			m.simpleCounter.IncrementStat("files_watched")
 			log.Printf("Error retrieving metadata for FileId %s: %v", fileId, err)
 			continue
 		}
@@ -84,6 +92,7 @@ func (m *Monitor) EvaluateWatchlist() error {
 
 			// Retrieve the children of the directory
 			children, err := m.api.GetChildren(fileId)
+			m.simpleCounter.IncrementStat("get_children_calls")
 			if err != nil {
 				log.Printf("Error retrieving children for FileId %s: %v", fileId, err)
 				continue

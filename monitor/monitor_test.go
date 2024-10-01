@@ -21,10 +21,11 @@ func TestMonitor(t *testing.T) {
 
 	historyCache := NewHistoryCache()
 	watchList := []model.FileId{"dir1"}
+	simpleCounter := NewSimpleCounter()
 
 	log.Printf("watchList: %v", watchList)
 
-	monitor := NewMonitor(fp, watchList, historyCache)
+	monitor := NewMonitor(fp, watchList, historyCache, simpleCounter)
 	monitor.Start()
 
 	monitor.EvaluateWatchlist()
@@ -50,6 +51,7 @@ func TestMonitorWithScale(t *testing.T) {
 	directoryCount := 100
 	watchCount := 100
 
+	simpleCounter := NewSimpleCounter()
 	fp := mock.NewFileProvider(fileCount, directoryCount)
 
 	historyCache := NewHistoryCache()
@@ -57,7 +59,7 @@ func TestMonitorWithScale(t *testing.T) {
 	// 500 files to watch
 	watchList := fp.CreateWatchList(watchCount)
 
-	monitor := NewMonitor(fp, watchList, historyCache)
+	monitor := NewMonitor(fp, watchList, historyCache, simpleCounter)
 	monitor.Start()
 
 	// check the watchlist 100 times
