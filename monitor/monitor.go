@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/jsfinn/enfi-assessment/model"
+	"github.com/samber/lo"
 )
 
 type Monitor struct {
@@ -16,14 +17,9 @@ type Monitor struct {
 
 // Create a new monitor with the given API and watchlist
 func NewMonitor(api Api, fileIds []model.FileId, cache Cache) *Monitor {
-	watchlist := make(map[model.FileId]bool)
-	for _, item := range fileIds {
-		watchlist[item] = true
-	}
-
 	return &Monitor{
 		api:       api,
-		watchlist: watchlist,
+		watchlist: lo.Associate(fileIds, func(fileId model.FileId) (model.FileId, bool) { return fileId, true }),
 		cache:     cache,
 	}
 }
@@ -50,7 +46,7 @@ func (m *Monitor) ShutDown() {
 func (m *Monitor) evaluateMetadata(metadata model.Metadata) {
 	if lastModified, _ := m.cache.Get(metadata.Id); lastModified < metadata.LastModified {
 		version := m.cache.Update(metadata.Id, metadata.LastModified)
-		m.api.CopyFile(metadata.Id, version)
+		m.api.CopyFile(metadata.Id, metadata.LastModified, version)
 	}
 }
 

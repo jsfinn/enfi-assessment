@@ -53,13 +53,17 @@ func NewFileProvider(fileCount int, directoryCount int) *fileProvider {
 	// Randomly create a tree structure
 	for i := 2; i < directoryCount; i++ {
 		parentIndex := randRange(0, i)
-		fp.files[i].ParentId = fp.files[parentIndex].FileId
+		parentFileId := fp.files[parentIndex].FileId
+		fp.files[i].ParentId = parentFileId
+		fp.childrenById[parentFileId] = append(fp.childrenById[parentFileId], fp.files[i].FileId)
 	}
 
 	// randomize the parent of the files
 	for i := directoryCount + fileCount/10; i < fileCount+directoryCount; i++ {
 		parentIndex := randRange(0, directoryCount)
-		fp.files[i].ParentId = fp.files[parentIndex].FileId
+		parentFileId := fp.files[parentIndex].FileId
+		fp.files[i].ParentId = parentFileId
+		fp.childrenById[parentFileId] = append(fp.childrenById[parentFileId], fp.files[i].FileId)
 	}
 
 	return fp
@@ -72,8 +76,18 @@ func (fp *fileProvider) UpdateLastModified(fileId model.FileId) {
 	}
 }
 
+// UpdateAny updates the last modified time of a random file (not directory) in the file provider.
 func (fp *fileProvider) UpdateAny() model.FileId {
-	fileIndex := randRange(0, len(fp.files))
+
+	firstNonDirectory := 0
+	for i := 0; i < len(fp.files); i++ {
+		if !fp.files[i].IsDirectory {
+			firstNonDirectory = i
+			break
+		}
+	}
+
+	fileIndex := randRange(firstNonDirectory, len(fp.files))
 	file := fp.files[fileIndex]
 	file.LastModified = time.Now().UnixMilli()
 	return file.FileId
@@ -107,7 +121,7 @@ func (fp *fileProvider) CreateWatchList(count int) []model.FileId {
 		// Randomly select a file that is not in the watch list
 		fileIndex := randRange(0, len(availableFiles))
 		fileId := availableFiles[fileIndex].FileId
-		availableFiles[i] = availableFiles[len(availableFiles)-1]
+		availableFiles[fileIndex] = availableFiles[len(availableFiles)-1]
 		availableFiles = availableFiles[:len(availableFiles)-1]
 
 		watchList = append(watchList, fileId)
@@ -128,13 +142,13 @@ func (fp *fileProvider) RetrieveMetadata(fileId model.FileId) (model.Metadata, e
 }
 
 // CopyFile copies the file with the given ID.  If the file is a directory, it returns an error.
-func (fp *fileProvider) CopyFile(fileId model.FileId, version int) error {
+func (fp *fileProvider) CopyFile(fileId model.FileId, lastModified int64, version int) error {
 	if file, ok := fp.fileById[fileId]; !ok {
 		return errors.New("file not found")
 	} else if file.IsDirectory {
 		return errors.New("file is a directory")
 	}
-	log.Println("Copying file ", fileId, " version ", version)
+	log.Println("Copying file ", fileId, " lastModified", lastModified, " version ", version)
 	return nil
 }
 

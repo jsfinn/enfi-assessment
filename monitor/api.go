@@ -7,7 +7,7 @@ type Api interface {
 	RetrieveMetadata(fileId model.FileId) (model.Metadata, error)
 
 	// CopyFile copies the file with the given ID.  If the file is a directory, it returns an error.
-	CopyFile(fileId model.FileId, version int) error
+	CopyFile(fileId model.FileId, lastUpdated int64, version int) error
 
 	// GetChildren returns the children of the given file.  If FileID is empty, it returns the root directory.  If the file is not a directory, it returns an error.
 	GetChildren(fileId model.FileId) ([]model.Metadata, error)
