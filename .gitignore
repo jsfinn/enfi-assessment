@@ -1,0 +1,10 @@
+# Binaries
+/my-go-project
+
+# Dependency directories
+/vendor/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
