@@ -27,10 +27,10 @@ func TestGenerateLargeTestData(t *testing.T) {
 
 	// Configuration parameters
 	numFiles := 10000
-	numDirs := 1000
+	numDirs := 100
 	watchlistSize := 500
 	numIterations := 10
-	updateSize := 30
+	updateSize := 5000
 
 	// Generate filesystem
 	filesystem, allFiles := generateFilesystem(numFiles, numDirs)
